@@ -125,10 +125,12 @@
 
       pushd ${installLocation}
 
-      mkdir -p $out/lib/
-      mv lib/*.jar $out/lib/
-      echo ${linkScript} $out/lib/
-      ${linkScript} $out/lib/
+      if [ -d lib/ ]; then
+        mkdir -p $out/lib/
+        mv lib/*.jar $out/lib/
+        echo ${linkScript} $out/lib/
+        ${linkScript} $out/lib/
+      fi
 
       if [ -d agent-libs/ ]; then
           mkdir -p $out/agent-libs/
@@ -136,9 +138,13 @@
           ${linkScript} $out/agent-libs/
       fi
 
-      mkdir -p $out/bin
-
-      cp $(ls bin/* | grep -v ".bat") $out/bin/${pname}
+      if [ -d bin/ ]; then
+        mkdir -p $out/bin
+        cp $(ls bin/* | grep -v ".bat") $out/bin/${pname}
+      else
+        mkdir -p $out/lib/
+        cp * $out/lib/
+      fi
 
       popd
       runHook postInstall
@@ -146,9 +152,11 @@
 
     dontWrapGApps = true;
     postFixup = ''
-      wrapProgram $out/bin/${pname} \
-        --set-default JAVA_HOME "${jdk.home}" \
-        ''${gappsWrapperArgs[@]}
+      if [ -f $out/bin/${pname} ]; then
+        wrapProgram $out/bin/${pname} \
+          --set-default JAVA_HOME "${jdk.home}" \
+          ''${gappsWrapperArgs[@]}
+      fi
     '';
   };
 in
